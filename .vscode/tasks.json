@@ -1,0 +1,19 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build",
+			"type": "shell",
+			"group": "build",
+			"command": "west",
+			"args": [
+				"build",
+				"-b", "stm32mp157c_dk2",
+				"${workspaceFolder}/app"
+			],
+			"problemMatcher": [
+				"$gcc"
+			]
+		}
+	]
+}

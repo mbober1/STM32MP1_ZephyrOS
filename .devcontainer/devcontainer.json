@@ -1,0 +1,29 @@
+{
+  "name": "vscode-zephyr",
+  "dockerFile": "Dockerfile",
+
+  "runArgs": [
+  "--privileged"
+  ],
+
+  "mounts": [
+    "source=/dev/bus/usb/,target=/dev/bus/usb/,type=bind"
+  ],
+
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/user/workspace/project,type=bind",
+  "workspaceFolder": "/home/user/workspace/project",
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux" : "bash",
+        "extensions.ignoreRecommendations": true
+      },
+      "extensions": [
+        "ms-vscode.cpptools",
+        "marus25.cortex-debug",
+        "mcu-debug.debug-tracker-vscode"
+      ]
+    }
+  } 
+}

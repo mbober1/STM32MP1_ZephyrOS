@@ -1,0 +1,24 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+
+    {
+      "name": "Debug STM32MP157_M4",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/build/zephyr/zephyr.elf",
+      "request": "attach",
+      "type": "cortex-debug",
+      "runToEntryPoint": "main",
+      "servertype": "jlink",
+      "serverpath": "/opt/SEGGER/JLink/JLinkGDBServerCLExe",
+      "armToolchainPath": "/opt/zephyr-sdk-${env:ZSDK_VERSION}/${env:TOOLCHAIN}/bin",
+      "toolchainPrefix": "${env:TOOLCHAIN}",
+      "interface": "jtag",
+      "device": "STM32MP15XX_M4",
+      "svdFile": "STM32MP157x.svd"
+    }
+  ]
+}
