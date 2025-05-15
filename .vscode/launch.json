@@ -17,6 +17,7 @@
       "armToolchainPath": "/opt/zephyr-sdk-${env:ZSDK_VERSION}/${env:TOOLCHAIN}/bin",
       "toolchainPrefix": "${env:TOOLCHAIN}",
       "interface": "jtag",
+      "serverArgs": ["-speed", "50"],
       "device": "STM32MP15XX_M4",
       "svdFile": "STM32MP157x.svd"
     }

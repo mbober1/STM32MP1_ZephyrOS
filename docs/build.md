@@ -1,0 +1,1 @@
+west build -b stm32mp157c_dk2 app

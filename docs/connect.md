@@ -1,0 +1,1 @@
+/opt/SEGGER/JLink/JLinkExe -autoconnect 1 -device STM32MP15XX_M4 -if jtag -speed 4000
