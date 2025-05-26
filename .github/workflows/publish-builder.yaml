@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - .github/workflows/publish-builder.yaml
-      - .devcontainer/Dockerfile
+      - .devcontainer/Dockerfile.ci
 
 env:
   REGISTRY: ghcr.io

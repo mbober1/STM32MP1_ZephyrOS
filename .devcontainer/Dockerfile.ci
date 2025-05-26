@@ -2,7 +2,6 @@ FROM ubuntu:22.04
 
 ENV TOOLCHAIN="arm-zephyr-eabi"
 ENV ZSDK_VERSION="0.17.0"
-ARG WGET_ARGS="-q --show-progress --progress=bar:force:noscroll"
 ARG ZEPHYR_SDK_DIR="/opt"
 ARG UID=1000
 ARG GID=1000
@@ -99,7 +98,7 @@ RUN dpkg --add-architecture i386 && \
 		srecord \
 		texinfo \
 		thrift-compiler \
-		udev git wget \
+		udev \
 		unzip \
 		valgrind \
 		wget \
@@ -127,25 +126,13 @@ RUN python3 -m pip install -U --no-cache-dir pip && \
 		nrf-regtool~=7.0.0 && \
 	pip3 check
 
-
-# Hack udev to run inside a container
-RUN sed -i.bak -e '/if \[ ! -w \/sys \]/,+3 s/^/#/' /etc/init.d/udev
-
-# Install Jlink
-RUN wget ${WGET_ARGS} --post-data "accept_license_agreement=accepted" https://www.segger.com/downloads/jlink/JLink_Linux_x86_64.deb && \
-	dpkg -i ./JLink_Linux_x86_64.deb && \
-	rm ./JLink_Linux_x86_64.deb
-
 # install minimal Zephyr SDK
 WORKDIR "${ZEPHYR_SDK_DIR}"
-RUN wget ${WGET_ARGS} -qO- https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZSDK_VERSION}/zephyr-sdk-${ZSDK_VERSION}_linux-x86_64_minimal.tar.xz | tar xJ
+RUN wget -qO- https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZSDK_VERSION}/zephyr-sdk-${ZSDK_VERSION}_linux-x86_64_minimal.tar.xz | tar xJ
 
 # install toolchain and host tools
 WORKDIR "${ZEPHYR_SDK}"
 RUN ./setup.sh -t all -h
-
-# install OpenOCD udev rules
-ADD https://raw.githubusercontent.com/espressif/openocd-esp32/refs/heads/master/contrib/60-openocd.rules /lib/udev/rules.d/60-openocd.rules
 
 # Create 'user' account
 RUN groupadd -g 18 -o dialout2
@@ -163,17 +150,7 @@ RUN west init && \
 	west update && \
     python3 -m pip install -r zephyr/scripts/requirements.txt
 
-# RUN git clone -n --depth=1 --filter=tree:0 https://github.com/cmsis-svd/cmsis-svd-data.git && \
-# 	cd cmsis-svd-data && \
-# 	git sparse-checkout set --no-cone data/STMicro && \
-# 	git checkout
-# ENV SVD_DIR=/home/${USERNAME}/workspace/cmsis-svd-data/data/STMicro
-
 
 ENV XDG_CACHE_HOME=/home/${USERNAME}/.cache
 ENV ZEPHYR_BASE=/home/${USERNAME}/workspace/zephyr
 ENV PATH="${ZEPHYR_BASE}/scripts:${PATH}"
-# add openocd to PATH
-ENV PATH="${ZEPHYR_SDK}/sysroots/x86_64-pokysdk-linux/usr/bin:${PATH}"
-# add toolchain to PATH
-ENV PATH="${ZEPHYR_SDK}/${TOOLCHAIN}/bin:${PATH}"
