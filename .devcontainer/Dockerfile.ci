@@ -1,123 +1,65 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.04 AS base
 
 ENV TOOLCHAIN="arm-zephyr-eabi"
-ENV ZSDK_VERSION="0.17.0"
+ENV ZSDK_VERSION="0.17.1"
 ARG ZEPHYR_SDK_DIR="/opt"
-ARG UID=1000
-ARG GID=1000
-ARG USERNAME="user"
 ENV ZEPHYR_SDK=${ZEPHYR_SDK_DIR}/zephyr-sdk-${ZSDK_VERSION}
 ENV DEBIAN_FRONTEND=noninteractive
-
 SHELL ["/bin/bash", "-c"]
 
-RUN dpkg --add-architecture i386 && \
-	apt-get -y update && \
+RUN apt-get -y update && \
 	apt-get -y upgrade && \
 	apt-get --no-install-recommends -y install \
-		autoconf \
-		automake \
-		bison \
-		build-essential \
-		ca-certificates \
 		ccache \
-		chrpath \
 		cmake \
-		cpio \
 		device-tree-compiler \
 		dfu-util \
-		diffstat \
-		dos2unix \
-		doxygen \
 		file \
-		flex \
-		g++ \
 		g++-multilib \
-		gawk \
 		gcc \
 		gcc-multilib \
-		gcovr \
-		gdb \
 		git \
-		gnupg \
 		gperf \
-		gtk-sharp2 \
-		help2man \
-		iproute2 \
-		lcov \
-		libc6-dbg:i386 \
-		libcairo2-dev \
-		libfontconfig1 \
-		libfreetype6 \
-		libfuse-dev:i386 \
-		libglib2.0-0 \
-		libglib2.0-dev \
-		libgtk2.0-0 \
-		libice6 \
-		liblocale-gettext-perl \
-		libncurses5-dev \
-		libpcap-dev \
-		libpopt0 \
-		libsdl1.2-dev \
+		libmagic1 \
 		libsdl2-dev \
-		libsdl2-dev:i386 \
-		libsm6 \
-		libssl-dev \
-		libtool \
-		libtool-bin \
-		libx11-xcb1 \
-		libxcb-icccm4 \
-		libxcb-image0 \
-		libxcb-keysyms1 \
-		libxcb-randr0 \
-		libxcb-render-util0 \
-		libxcb-shape0 \
-		libxcb-sync1 \
-		libxcb-xfixes0 \
-		libxkbcommon-x11-0 \
-		libxrender1 \
-		locales \
-		lsb-release \
 		make \
-		net-tools \
 		ninja-build \
-		openssh-client \
-		ovmf \
-		parallel \
-		picocom \
-		pkg-config \
-		python-is-python3 \
 		python3-dev \
 		python3-pip \
-		python3-ply \
 		python3-setuptools \
-		qemu \
-		rsync \
-		socat \
-		software-properties-common \
-		srecord \
-		texinfo \
-		thrift-compiler \
-		udev \
-		unzip \
-		valgrind \
+		python3-tk \
+		python3-wheel \
 		wget \
 		xz-utils \
-	&& \
+		&& \
 	apt-get clean -y && \
 	apt-get autoremove --purge -y && \
 	rm -rf /var/lib/apt/lists/*
 
-# Initialise system locale
-ENV LANG=en_US.UTF-8
-ENV LANGUAGE=en_US:en
-ENV LC_ALL=en_US.UTF-8
-RUN locale-gen $LANG
+
+
+FROM base AS step-sdk
+
+WORKDIR "${ZEPHYR_SDK_DIR}"
+ADD https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZSDK_VERSION}/zephyr-sdk-${ZSDK_VERSION}_linux-x86_64_minimal.tar.xz zephyr-sdk.tar.xz
+RUN tar xf zephyr-sdk.tar.xz
+WORKDIR "${ZEPHYR_SDK}"
+RUN ./setup.sh -t ${TOOLCHAIN} -h
+
+
+
+FROM base
+ARG UID=1000
+ARG GID=1000
+ARG USERNAME="user"
+
+ENV XDG_CACHE_HOME=/home/${USERNAME}/.cache
+ENV ZEPHYR_BASE=/home/${USERNAME}/workspace/zephyr
+ENV PATH="${ZEPHYR_BASE}/scripts:${PATH}"
 
 # Install Python dependencies
 RUN python3 -m pip install -U --no-cache-dir pip && \
 	pip3 install -U --no-cache-dir wheel setuptools && \
-	pip3 install --no-cache-dir pygobject && \
 	pip3 install --no-cache-dir \
 		-r https://raw.githubusercontent.com/zephyrproject-rtos/zephyr/main/scripts/requirements.txt \
 		-r https://raw.githubusercontent.com/zephyrproject-rtos/mcuboot/main/scripts/requirements.txt \
@@ -126,31 +68,17 @@ RUN python3 -m pip install -U --no-cache-dir pip && \
 		nrf-regtool~=7.0.0 && \
 	pip3 check
 
-# install minimal Zephyr SDK
-WORKDIR "${ZEPHYR_SDK_DIR}"
-RUN wget -qO- https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZSDK_VERSION}/zephyr-sdk-${ZSDK_VERSION}_linux-x86_64_minimal.tar.xz | tar xJ
-
-# install toolchain and host tools
-WORKDIR "${ZEPHYR_SDK}"
-RUN ./setup.sh -t all -h
-
 # Create 'user' account
-RUN groupadd -g 18 -o dialout2
 RUN groupadd -g $GID -o ${USERNAME}
 RUN useradd -u $UID -m -g ${USERNAME} -G plugdev ${USERNAME}
-RUN usermod -a -G dialout2 ${USERNAME}
+RUN usermod -a -G dialout ${USERNAME}
 
 USER ${USERNAME}
 WORKDIR /home/${USERNAME}/workspace
 
-RUN	${ZEPHYR_SDK}/setup.sh -c && \
+COPY --from=step-sdk /opt/zephyr-sdk-${ZSDK_VERSION} /opt/zephyr-sdk-${ZSDK_VERSION}
+RUN	${ZEPHYR_SDK}/setup.sh -c -t ${TOOLCHAIN} && \
 	chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.cmake
 
 RUN west init && \
-	west update && \
-    python3 -m pip install -r zephyr/scripts/requirements.txt
-
-
-ENV XDG_CACHE_HOME=/home/${USERNAME}/.cache
-ENV ZEPHYR_BASE=/home/${USERNAME}/workspace/zephyr
-ENV PATH="${ZEPHYR_BASE}/scripts:${PATH}"
+	west update
