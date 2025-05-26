@@ -1,6 +1,7 @@
 {
   "name": "vscode-zephyr",
-  "dockerFile": "Dockerfile",
+  // "dockerFile": "Dockerfile",
+  "image": "ghcr.io/mbober1/stm32mp1_zephyros/zephyros-builder:master",
 
   "runArgs": [
   "--privileged"
