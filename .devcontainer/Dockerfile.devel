@@ -1,0 +1,58 @@
+FROM ghcr.io/mbober1/stm32mp1_zephyros/zephyros-builder:master
+
+ARG USERNAME="user"
+USER root
+
+RUN apt-get -y update && \
+	apt-get --no-install-recommends -y install \
+		ca-certificates \
+		wget \
+		udev \
+		libxrender1 \
+		libxcb-render0 \
+		libxcb-render-util0 \
+		libxcb-shape0 \
+		libxcb-randr0 \
+		libxcb-xfixes0 \
+		libxcb-sync1 \
+		libxcb-shm0 \
+		libxcb-icccm4 \
+		libxcb-keysyms1 \
+		libxcb-image0 \
+		libxkbcommon0 \
+		libxkbcommon-x11-0 \
+		libfontconfig1 \
+		libfreetype6 \
+		libxext6 \
+		libx11-6 \
+		libxcb1 \
+		libx11-xcb1 \
+		libsm6 \
+		libice6 \
+		libglib2.0-0 \
+		&& \
+	apt-get clean -y && \
+	apt-get autoremove --purge -y && \
+	rm -rf /var/lib/apt/lists/*
+
+# Hack udev to run inside a container
+RUN sed -i.bak -e '/if \[ ! -w \/sys \]/,+3 s/^/#/' /etc/init.d/udev
+
+# Install Jlink
+RUN wget -q --post-data "accept_license_agreement=accepted" https://www.segger.com/downloads/jlink/JLink_Linux_x86_64.deb && \
+	dpkg -i ./JLink_Linux_x86_64.deb && \
+	rm ./JLink_Linux_x86_64.deb
+
+# install OpenOCD udev rules
+RUN cp ${ZEPHYR_SDK}/sysroots/x86_64-pokysdk-linux/usr/share/openocd/contrib/60-openocd.rules /etc/udev/rules.d
+
+USER ${USERNAME}
+WORKDIR /home/${USERNAME}/workspace
+
+# ENV XDG_CACHE_HOME=/home/${USERNAME}/.cache
+# ENV ZEPHYR_BASE=/home/${USERNAME}/workspace/zephyr
+# ENV PATH="${ZEPHYR_BASE}/scripts:${PATH}"
+# # add openocd to PATH
+# ENV PATH="${ZEPHYR_SDK}/sysroots/x86_64-pokysdk-linux/usr/bin:${PATH}"
+# # add toolchain to PATH
+# ENV PATH="${ZEPHYR_SDK}/${TOOLCHAIN}/bin:${PATH}"
