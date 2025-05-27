@@ -5,12 +5,15 @@ USER root
 
 RUN apt-get -y update && \
 	apt-get --no-install-recommends -y install \
+		build-essential \
 		ca-certificates \
+		debhelper \
 		libfontconfig1 \
 		libfreetype6 \
 		libglib2.0-0 \
 		libice6 \
 		libsm6 \
+		libusb-1.0-0-dev \
 		libx11-6 \
 		libx11-xcb1 \
 		libxcb-icccm4 \
@@ -31,6 +34,7 @@ RUN apt-get -y update && \
 		locales \
 		udev \
 		wget \
+		openocd \
 		&& \
 	apt-get clean -y && \
 	apt-get autoremove --purge -y && \
@@ -45,13 +49,13 @@ RUN locale-gen $LANG
 # Hack udev to run inside a container
 RUN sed -i.bak -e '/if \[ ! -w \/sys \]/,+3 s/^/#/' /etc/init.d/udev
 
+# install OpenOCD udev rules
+RUN cp ${ZEPHYR_SDK}/sysroots/x86_64-pokysdk-linux/usr/share/openocd/contrib/60-openocd.rules /etc/udev/rules.d
+
 # Install Jlink
 RUN wget -q --post-data "accept_license_agreement=accepted" https://www.segger.com/downloads/jlink/JLink_Linux_x86_64.deb && \
 	dpkg -i ./JLink_Linux_x86_64.deb && \
 	rm ./JLink_Linux_x86_64.deb
-
-# install OpenOCD udev rules
-RUN cp ${ZEPHYR_SDK}/sysroots/x86_64-pokysdk-linux/usr/share/openocd/contrib/60-openocd.rules /etc/udev/rules.d
 
 USER ${USERNAME}
 WORKDIR /home/${USERNAME}/workspace

@@ -6,7 +6,7 @@
   "configurations": [
 
     {
-      "name": "Debug STM32MP157_M4",
+      "name": "JLink Debug STM32MP157_M4",
       "cwd": "${workspaceFolder}",
       "executable": "${workspaceFolder}/build/zephyr/zephyr.elf",
       "request": "attach",
@@ -14,12 +14,35 @@
       "runToEntryPoint": "main",
       "servertype": "jlink",
       "serverpath": "/opt/SEGGER/JLink/JLinkGDBServerCLExe",
-      "armToolchainPath": "/opt/zephyr-sdk-${env:ZSDK_VERSION}/${env:TOOLCHAIN}/bin",
+      "armToolchainPath": "${env:ZEPHYR_SDK}/${env:TOOLCHAIN}/bin",
       "toolchainPrefix": "${env:TOOLCHAIN}",
       "interface": "jtag",
       "serverArgs": ["-speed", "50"],
       "device": "STM32MP15XX_M4",
       "svdFile": "STM32MP157x.svd"
+    },
+    {
+      "name": "OpenOCD ST-Link Debug STM32MP157_M4",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/build/zephyr/zephyr.elf",
+      "request": "launch",
+      "type": "cortex-debug",
+      "runToEntryPoint": "main",
+      "servertype": "openocd",
+      "serverpath": "${env:ZEPHYR_SDK}/sysroots/x86_64-pokysdk-linux/usr/bin/openocd",
+      "configFiles":["${env:ZEPHYR_BASE}/boards/st/stm32mp157c_dk2/support/openocd.cfg"],
+      "searchDir": 
+      [
+        "${env:ZEPHYR_BASE}/boards/st/stm32mp157c_dk2/support", 
+        "${env:ZEPHYR_SDK}/sysroots/x86_64-pokysdk-linux/usr/share/openocd/scripts"
+      ],
+      "armToolchainPath": "${env:ZEPHYR_SDK}/${env:TOOLCHAIN}/bin",
+      "toolchainPrefix": "${env:TOOLCHAIN}",
+      "svdFile": "STM32MP157x.svd",
+      "overrideLaunchCommands": [
+          "monitor reset halt",
+          "load"
+      ],
     }
   ]
 }
