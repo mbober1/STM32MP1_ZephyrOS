@@ -6,34 +6,41 @@ USER root
 RUN apt-get -y update && \
 	apt-get --no-install-recommends -y install \
 		ca-certificates \
-		wget \
-		udev \
-		libxrender1 \
-		libxcb-render0 \
-		libxcb-render-util0 \
-		libxcb-shape0 \
-		libxcb-randr0 \
-		libxcb-xfixes0 \
-		libxcb-sync1 \
-		libxcb-shm0 \
-		libxcb-icccm4 \
-		libxcb-keysyms1 \
-		libxcb-image0 \
-		libxkbcommon0 \
-		libxkbcommon-x11-0 \
 		libfontconfig1 \
 		libfreetype6 \
-		libxext6 \
-		libx11-6 \
-		libxcb1 \
-		libx11-xcb1 \
-		libsm6 \
-		libice6 \
 		libglib2.0-0 \
+		libice6 \
+		libsm6 \
+		libx11-6 \
+		libx11-xcb1 \
+		libxcb-icccm4 \
+		libxcb-image0 \
+		libxcb-keysyms1 \
+		libxcb-randr0 \
+		libxcb-render-util0 \
+		libxcb-render0 \
+		libxcb-shape0 \
+		libxcb-shm0 \
+		libxcb-sync1 \
+		libxcb-xfixes0 \
+		libxcb1 \
+		libxext6 \
+		libxkbcommon-x11-0 \
+		libxkbcommon0 \
+		libxrender1 \
+		locales \
+		udev \
+		wget \
 		&& \
 	apt-get clean -y && \
 	apt-get autoremove --purge -y && \
 	rm -rf /var/lib/apt/lists/*
+
+# Initialise system locale
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
+RUN locale-gen $LANG
 
 # Hack udev to run inside a container
 RUN sed -i.bak -e '/if \[ ! -w \/sys \]/,+3 s/^/#/' /etc/init.d/udev
@@ -48,11 +55,3 @@ RUN cp ${ZEPHYR_SDK}/sysroots/x86_64-pokysdk-linux/usr/share/openocd/contrib/60-
 
 USER ${USERNAME}
 WORKDIR /home/${USERNAME}/workspace
-
-# ENV XDG_CACHE_HOME=/home/${USERNAME}/.cache
-# ENV ZEPHYR_BASE=/home/${USERNAME}/workspace/zephyr
-# ENV PATH="${ZEPHYR_BASE}/scripts:${PATH}"
-# # add openocd to PATH
-# ENV PATH="${ZEPHYR_SDK}/sysroots/x86_64-pokysdk-linux/usr/bin:${PATH}"
-# # add toolchain to PATH
-# ENV PATH="${ZEPHYR_SDK}/${TOOLCHAIN}/bin:${PATH}"
