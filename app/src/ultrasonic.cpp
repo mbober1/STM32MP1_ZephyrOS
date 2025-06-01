@@ -73,6 +73,6 @@ void ultrasonic_task(void *arg1, void *arg2, void *arg3)
 	while (1)
 	{
 		run();
-		k_sleep(K_MSEC(100));
+		k_sleep(K_MSEC(20));
 	}
 }
