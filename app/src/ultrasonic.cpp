@@ -5,8 +5,8 @@ LOG_MODULE_REGISTER(ultrasonic);
 
 static const struct device *ultrasonic = DEVICE_DT_GET_ONE(hc_sr04);
 constexpr int messure_count = 10;
-float distance[messure_count];
-
+static float distance[messure_count];
+static struct k_mutex mutex;
 
 static int trigger_measurement(float &range)
 {
@@ -21,7 +21,9 @@ static int trigger_measurement(float &range)
 		
 		if (0 == ret)
 		{
+			k_mutex_lock(&mutex, K_FOREVER);
 			range = sensor_value_to_float(&distance);
+			k_mutex_unlock(&mutex);
 		}
 		else
 		{
@@ -40,10 +42,12 @@ float get_distance()
 {
 	float result = 0.f;
 
+	k_mutex_lock(&mutex, K_FOREVER);
 	for (auto &&val : distance)
 	{
 		result += val;
 	}
+	k_mutex_unlock(&mutex);
 	
 	return result / messure_count *100.f;
 }
@@ -69,6 +73,8 @@ void ultrasonic_task(void *arg1, void *arg2, void *arg3)
 		LOG_ERR("Device %s is not ready\n", ultrasonic->name);
 		return;
 	}
+
+	k_mutex_init(&mutex);
 
 	while (1)
 	{
