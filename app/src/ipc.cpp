@@ -10,6 +10,8 @@
 #include <metal/device.h>
 #include <resource_table.h>
 
+#include "ultrasonic.hpp"
+
 #define RPMSG_CHAN_NAME "rpmsg-tty"
 #define SHM_DEVICE_NAME "shm"
 // #define CONFIG_OPENAMP_IPC_DEV_NAME "$(dt_chosen_label,$(DT_CHOSEN_Z_IPC))"
@@ -47,7 +49,8 @@ static struct rpmsg_virtio_device rvdev;
 
 static fw_resource_table *rsc_table;
 
-static unsigned char rcv_msg[20];
+static char rcv_msg[20];
+static char tx_buffer[64];
 static unsigned int rcv_len;
 static struct rpmsg_endpoint rcv_ept;
 
@@ -68,7 +71,7 @@ static int rpmsg_recv_callback(struct rpmsg_endpoint *ept, void *data, size_t le
     return RPMSG_SUCCESS;
 }
 
-static void receive_message(unsigned char **msg, unsigned int *len)
+static void receive_message(char **msg, unsigned int *len)
 {
     while (k_sem_take(&data_rx_sem, K_NO_WAIT) != 0) {
         int status = k_sem_take(&data_sem, K_FOREVER);
@@ -162,13 +165,6 @@ int platform_init(void)
     return 0;
 }
 
-static void cleanup_system(void)
-{
-    ipm_set_enabled(ipm_handle, 0);
-    rpmsg_deinit_vdev(&rvdev);
-    metal_finish();
-}
-
 struct  rpmsg_device *
 platform_create_rpmsg_vdev(unsigned int vdev_index,
                            unsigned int role,
@@ -232,7 +228,7 @@ void ipc_task(void *arg1, void *arg2, void *arg3)
     ARG_UNUSED(arg3);
 
     struct rpmsg_device *rpdev;
-    unsigned char *msg;
+    char *msg;
     unsigned int len;
     int ret = 0;
 
@@ -259,7 +255,24 @@ void ipc_task(void *arg1, void *arg2, void *arg3)
     /* Handle incoming messsages and send replies when needed */
     for (;;) {
         receive_message(&msg, &len);
-        printk("MESSAGE: %s\n", msg);
-        rpmsg_send(&rcv_ept, msg, len);
+        
+        int ret = 0;
+
+        if (strcmp(msg, "dist\n") == 0)
+        {
+            float distance = get_distance();
+            ret = snprintf(tx_buffer, sizeof(tx_buffer), "%f", distance);
+
+        }
+        else
+        {
+            ret = snprintf(tx_buffer, sizeof(tx_buffer), "Not known command");
+        }
+
+        if (ret > 0)
+        {
+            rpmsg_send(&rcv_ept, tx_buffer, ret);
+        }
+        // printk("MESSAGE: %s\n", msg);
     }
 }

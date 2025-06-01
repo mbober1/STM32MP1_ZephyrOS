@@ -18,7 +18,7 @@ int main(void)
 
 	while (1)
 	{
-		printf("Distance: %.01f cm\n", get_distance());
+		// printf("Distance: %.01f cm\n", get_distance());
 		k_sleep(K_MSEC(100));
 	}
 	
