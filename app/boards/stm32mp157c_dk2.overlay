@@ -19,6 +19,12 @@
 		compatible = "mmio-sram";
 		reg = <0x10040000 DT_SIZE_K(64)>;
 	};
+
+	hc_sr04: hc_sr04 {
+		compatible = "hc-sr04";
+		trigger-gpios = <&gpiog 15 GPIO_ACTIVE_HIGH>;
+		echo-gpios = <&gpiod 7 GPIO_ACTIVE_HIGH>;
+	};
 };
 
 &mcusram {

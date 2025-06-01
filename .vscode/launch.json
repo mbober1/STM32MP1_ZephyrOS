@@ -28,8 +28,12 @@
       "request": "launch",
       "type": "cortex-debug",
       "servertype": "openocd",
+      "device": "stm32mp15x.cm4",
       "serverpath": "${env:ZEPHYR_SDK}/sysroots/x86_64-pokysdk-linux/usr/bin/openocd",
-      "configFiles":["${env:ZEPHYR_BASE}/boards/st/stm32mp157c_dk2/support/openocd.cfg"],
+      "configFiles":
+      [
+        "board/stm32mp15x_dk2.cfg",
+      ],
       "searchDir": 
       [
         "${env:ZEPHYR_BASE}/boards/st/stm32mp157c_dk2/support", 
@@ -39,6 +43,13 @@
       "toolchainPrefix": "${env:TOOLCHAIN}",
       "svdFile": "STM32MP157x.svd",
       "preLaunchTask": "Build",
+      "openOCDLaunchCommands": 
+      [
+        "stm32mp15x.cpu0 configure -gdb-port disabled", 
+        "stm32mp15x.cpu1 configure -gdb-port disabled",
+        "targets stm32mp15x.cm4",
+        "adapter speed 4000",
+      ],
       "overrideLaunchCommands": [
           "monitor reset halt",
           "load"
