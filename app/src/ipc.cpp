@@ -261,8 +261,7 @@ void ipc_task(void *arg1, void *arg2, void *arg3)
         if (strcmp(msg, "dist\n") == 0)
         {
             float distance = get_distance();
-            ret = snprintf(tx_buffer, sizeof(tx_buffer), "%f", distance);
-
+            ret = snprintf(tx_buffer, sizeof(tx_buffer), "%f", (double)distance);
         }
         else
         {
