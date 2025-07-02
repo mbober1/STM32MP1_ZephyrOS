@@ -1,4 +1,4 @@
-FROM ubuntu:22.04 AS base
+FROM ubuntu:24.04 AS base
 
 ENV TOOLCHAIN="arm-zephyr-eabi"
 ENV ZSDK_VERSION="0.17.1"
@@ -8,7 +8,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-c"]
 
 RUN apt-get -y update && \
-	apt-get -y upgrade && \
 	apt-get --no-install-recommends -y install \
 		ccache \
 		cmake \
@@ -51,16 +50,13 @@ RUN ./setup.sh -t ${TOOLCHAIN} -h
 FROM base
 ARG UID=1000
 ARG GID=1000
-ARG USERNAME="user"
+ARG USERNAME="ubuntu"
 
-ENV XDG_CACHE_HOME=/home/${USERNAME}/.cache
 ENV ZEPHYR_BASE=/home/${USERNAME}/workspace/zephyr
 ENV PATH="${ZEPHYR_BASE}/scripts:${PATH}"
 
 # Install Python dependencies
-RUN python3 -m pip install -U --no-cache-dir pip && \
-	pip3 install -U --no-cache-dir wheel setuptools && \
-	pip3 install --no-cache-dir \
+RUN	pip3 install --no-cache-dir --break-system-packages \
 		-r https://raw.githubusercontent.com/zephyrproject-rtos/zephyr/main/scripts/requirements.txt \
 		-r https://raw.githubusercontent.com/zephyrproject-rtos/mcuboot/main/scripts/requirements.txt \
 		GitPython imgtool junitparser junit2html numpy protobuf PyGithub \
@@ -68,17 +64,10 @@ RUN python3 -m pip install -U --no-cache-dir pip && \
 		nrf-regtool~=7.0.0 && \
 	pip3 check
 
-# Create 'user' account
-RUN groupadd -g $GID -o ${USERNAME}
-RUN useradd -u $UID -m -g ${USERNAME} -G plugdev ${USERNAME}
-RUN usermod -a -G dialout ${USERNAME}
-
 USER ${USERNAME}
 WORKDIR /home/${USERNAME}/workspace
 
 COPY --from=step-sdk /opt/zephyr-sdk-${ZSDK_VERSION} /opt/zephyr-sdk-${ZSDK_VERSION}
-RUN	${ZEPHYR_SDK}/setup.sh -c -t ${TOOLCHAIN} && \
-	chown -R ${USERNAME}:${USERNAME} /home/${USERNAME}/.cmake
 
 RUN west init && \
 	west update

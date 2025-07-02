@@ -135,7 +135,7 @@ int platform_init(void)
     }
 
     /* declare resource table region */
-    rsc_table_get(&rsc_tab_addr, &rsc_size);
+    rsc_table_get((void**)(&rsc_tab_addr), &rsc_size);
     rsc_table = (fw_resource_table*)rsc_tab_addr;
 
     metal_io_init(&device->regions[1], rsc_table,
